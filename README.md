@@ -38,7 +38,7 @@ Refer to [radar_esp32/radar_esp32.ino](radar_esp32/radar_esp32.ino) for exact pi
 **Upload**
 - Select **ESP32 Dev Module** (or appropriate ESP32 board) in Arduino IDE.
 - Set the upload baud to **921600** (recommended for faster uploads) and choose the correct COM port.
-- Click Upload in Arduino IDE.
+- Click Upload in Arduino IDE and keep the boot button of ESP32 pressed while uploading, otherwise it won't work.
 
 **Running & Accessing the Dashboard**
 - Open the Serial Monitor at `115200` baud after the ESP32 boots. The sketch prints the assigned IP address on successful WiFi connection.
