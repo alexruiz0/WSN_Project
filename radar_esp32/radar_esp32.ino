@@ -4,6 +4,7 @@
 // ============================================================
 
 #include <WiFi.h>
+#include <AsyncTCP.h>
 #include <ESPAsyncWebServer.h>
 #include <ESP32Servo.h>
 #include <DHT.h>
@@ -31,8 +32,8 @@
 #define ALERT_DIST_CM  20          // buzzer threshold (cm)
 
 // ---------- WIFI CREDENTIALS ----------
-const char* SSID     = "YOUR_SSID";
-const char* PASSWORD = "YOUR_PASSWORD";
+const char* SSID     = "mywifi";
+const char* PASSWORD = "password";
 
 // ---------- GLOBALS ----------
 int   distances[SCAN_POINTS];

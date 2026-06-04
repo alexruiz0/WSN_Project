@@ -1,2 +1,0 @@
-SERVO --> Servo by Michael Margolis
-HC-SR04 --> HC-SR04 by Dirk Sarodnick
