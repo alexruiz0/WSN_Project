@@ -32,8 +32,8 @@
 #define ALERT_DIST_CM  20          // buzzer threshold (cm)
 
 // ---------- WIFI CREDENTIALS ----------
-const char* SSID     = "mywifi";
-const char* PASSWORD = "password";
+const char* SSID     = "hololelo";
+const char* PASSWORD = "wsns1234";
 
 // ---------- GLOBALS ----------
 int   distances[SCAN_POINTS];

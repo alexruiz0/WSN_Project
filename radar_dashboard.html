@@ -217,6 +217,38 @@
     box-shadow: 0 0 12px rgba(0,255,136,0.2);
   }
 
+  button#download-btn {
+    background: transparent;
+    border: 1px solid rgba(0,255,136,0.3);
+    color: var(--green);
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.72rem;
+    padding: 4px 14px;
+    cursor: pointer;
+    letter-spacing: 0.1em;
+    transition: background 0.2s, box-shadow 0.2s;
+  }
+  button#download-btn:hover {
+    background: rgba(0,255,136,0.08);
+    box-shadow: 0 0 12px rgba(0,255,136,0.2);
+  }
+
+  button#download-csv-btn {
+    background: transparent;
+    border: 1px solid rgba(0,255,136,0.3);
+    color: var(--green);
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.72rem;
+    padding: 4px 14px;
+    cursor: pointer;
+    letter-spacing: 0.1em;
+    transition: background 0.2s, box-shadow 0.2s;
+  }
+  button#download-csv-btn:hover {
+    background: rgba(0,255,136,0.08);
+    box-shadow: 0 0 12px rgba(0,255,136,0.2);
+  }
+
   @media (max-width: 620px) {
     main { grid-template-columns: 1fr; }
     #radar-wrap { grid-row: auto; }
@@ -264,6 +296,8 @@
       <span id="poll-label">5s</span>
     </label>
     <label><input type="checkbox" id="sweep-anim" checked> SWEEP FX</label>
+    <button id="download-btn">⇩ DOWNLOAD JSON</button>
+    <button id="download-csv-btn">⇩ DOWNLOAD CSV</button>
     <button id="refresh-btn">⟳ REFRESH</button>
   </div>
 </main>
@@ -274,6 +308,7 @@ let ESP_HOST   = 'http://192.168.1.100';
 let POLL_MS    = 5000;
 let sweepAnim  = true;
 let pollTimer  = null;
+let latestEnv  = null;
 
 // ── CANVAS SETUP ─────────────────────────────────────────────
 const canvas = document.getElementById('radar');
@@ -472,6 +507,88 @@ function updateStats(data) {
     now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
 }
 
+function downloadVisualizedData() {
+  if (!scanData.length) return;
+
+  const dists = scanData.map(d => d.dist);
+  const minD = Math.min(...dists);
+  const maxD = Math.max(...dists);
+  const minA = scanData[dists.indexOf(minD)]?.angle ?? null;
+
+  const payload = {
+    exportedAt: new Date().toISOString(),
+    sourceHost: ESP_HOST,
+    environment: latestEnv,
+    summary: {
+      points: scanData.length,
+      minDistanceCm: minD,
+      maxDistanceCm: maxD,
+      closestAngleDeg: minA
+    },
+    scan: scanData
+  };
+
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+
+  link.href = url;
+  link.download = `radar-data-${timestamp}.json`;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+}
+
+function escapeCsvValue(value) {
+  const text = value === null || value === undefined ? '' : String(value);
+  return `"${text.replace(/"/g, '""')}"`;
+}
+
+function downloadVisualizedCsv() {
+  if (!scanData.length) return;
+
+  const exportedAt = new Date().toISOString();
+  const sourceHost = ESP_HOST;
+  const temp = latestEnv?.temp ?? '';
+  const hum = latestEnv?.hum ?? '';
+
+  const header = [
+    'exportedAt',
+    'sourceHost',
+    'temperatureC',
+    'humidityPct',
+    'angleDeg',
+    'distanceCm'
+  ];
+
+  const rows = scanData.map(({ angle, dist }) => [
+    exportedAt,
+    sourceHost,
+    temp,
+    hum,
+    angle,
+    dist
+  ]);
+
+  const csv = [header, ...rows]
+    .map(row => row.map(escapeCsvValue).join(','))
+    .join('\r\n');
+
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+
+  link.href = url;
+  link.download = `radar-data-${timestamp}.csv`;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+}
+
 function setStatus(state) {
   const dot   = document.getElementById('status-dot');
   const label = document.getElementById('status-label');
@@ -488,6 +605,7 @@ async function poll() {
 
     // Update radar data
     scanData = scan;
+    latestEnv = env;
     updateStats(scan);
 
     // Update env
@@ -518,6 +636,8 @@ document.getElementById('sweep-anim').addEventListener('change', e => {
 });
 
 document.getElementById('refresh-btn').addEventListener('click', poll);
+document.getElementById('download-btn').addEventListener('click', downloadVisualizedData);
+document.getElementById('download-csv-btn').addEventListener('click', downloadVisualizedCsv);
 
 function restartPoll() {
   if (pollTimer) clearInterval(pollTimer);
